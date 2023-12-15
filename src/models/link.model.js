@@ -2,12 +2,12 @@ import mongoose, { Schema } from 'mongoose';
 
 const LinkSchema = new Schema(
     {
-        route: {
+        key: {
             type: String,
             require: true,
             index: true,
         },
-        destinationUrl: {
+        originUrl: {
             type: String,
             require: true,
         },
@@ -23,14 +23,30 @@ const LinkSchema = new Schema(
             type: Boolean,
             default: true,
         },
-        qrCode: {
+        icon: {
             type: String,
-            default: null,
+            default: '',
+        },
+        image: {
+            type: String,
+            default: '',
+        },
+        title: {
+            type: String,
+            default: '',
+        },
+        description: {
+            type: String,
+            default: '',
+        },
+        expireAt: {
+            type: Date,
+            default: Date.now,
+            index: { expires: '120m' },
         },
     },
     { timestamps: true }
 );
-
 const Link = mongoose.model('Link', LinkSchema);
 
 export default Link;
