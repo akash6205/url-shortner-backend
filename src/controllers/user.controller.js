@@ -2,10 +2,8 @@ import User from '../models/user.model.js';
 import { apiError } from '../utils/apiError.js';
 import { apiResponce } from '../utils/apiResponce.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
-import { Resend } from 'resend';
 import crypto from 'crypto';
-
-const resend = new Resend(process.env.RESEND_API_KEY);
+import { resend } from '../utils/resend.js';
 
 const generateAccessAndRefreshToken = async (userId) => {
     try {
