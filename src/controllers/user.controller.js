@@ -191,45 +191,45 @@ const logoutUser = asyncHandler(async (req, res) => {
     }
 });
 
-// const verifyEmail = asyncHandler(async (req, res) => {
-//     const { token } = req.params;
-//     if (!token) {
-//         return res.status(400).json(new apiError(400, 'Invalid token'));
-//     }
+const verifyEmail = asyncHandler(async (req, res) => {
+    const { token } = req.params;
+    if (!token) {
+        return res.status(400).json(new apiError(400, 'Invalid token'));
+    }
 
-//     try {
-//         const hashToken = crypto
-//             .createHash('sha256')
-//             .update(token)
-//             .digest('hex');
+    try {
+        const hashToken = crypto
+            .createHash('sha256')
+            .update(token)
+            .digest('hex');
 
-//         const verifiedUser = await User.findOneAndUpdate(
-//             { emailVerificationToken: hashToken },
-//             {
-//                 $set: {
-//                     emailVerificationToken: '',
-//                     isEmailVerified: true,
-//                 },
-//             },
-//             {
-//                 new: true,
-//             }
-//         );
-//         if (!verifiedUser) {
-//             return res.status(400).json(new apiError(400, 'Invalid token'));
-//         }
+        const verifiedUser = await User.findOneAndUpdate(
+            { emailVerificationToken: hashToken },
+            {
+                $set: {
+                    emailVerificationToken: '',
+                    isEmailVerified: true,
+                },
+            },
+            {
+                new: true,
+            }
+        );
+        if (!verifiedUser) {
+            return res.status(400).json(new apiError(400, 'Invalid token'));
+        }
 
-//         return res
-//             .status(200)
-//             .json(new apiResponce(200, 'Email verified', undefined, true));
-//     } catch (error) {
-//         console.log(error);
-//         throw new apiError(
-//             500,
-//             'something went wrong while verifying email',
-//             error
-//         );
-//     }
-// });
+        return res
+            .status(200)
+            .json(new apiResponce(200, 'Email verified', undefined, true));
+    } catch (error) {
+        console.log(error);
+        throw new apiError(
+            500,
+            'something went wrong while verifying email',
+            error
+        );
+    }
+});
 
 export { registerUser, loginUser, logoutUser, verifyEmail };
