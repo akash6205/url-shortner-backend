@@ -1,6 +1,7 @@
 import mongoose, { Schema } from 'mongoose';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
+import crypto from 'crypto';
 const UserSchema = new Schema(
     {
         email: {
@@ -22,6 +23,14 @@ const UserSchema = new Schema(
             require: true,
         },
         profileImg: {
+            type: String,
+            default: '',
+        },
+        isEmailVerified: {
+            type: Boolean,
+            default: false,
+        },
+        emailVerificationToken: {
             type: String,
             default: '',
         },
@@ -61,6 +70,15 @@ UserSchema.methods.generateRefreshToken = function () {
         }
     );
     return refreshToken;
+};
+
+UserSchema.methods.generateTemporaryToken = async function () {
+    const unHashToken = await crypto.randomBytes(20).toString('hex');
+    const hashToken = await crypto
+        .createHash('sha256')
+        .update(unHashToken)
+        .digest('hex');
+    return { unHashToken, hashToken };
 };
 
 const User = mongoose.model('User', UserSchema);
