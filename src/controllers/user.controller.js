@@ -2,10 +2,10 @@ import User from '../models/user.model.js';
 import { apiError } from '../utils/apiError.js';
 import { apiResponce } from '../utils/apiResponce.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
-// import { Resend } from 'resend';
-// import crypto from 'crypto';
+import { Resend } from 'resend';
+import crypto from 'crypto';
 
-// const resend = new Resend(`re_KunYK235_5iJp73yDLFAn87712C8fZiRG`);
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 const generateAccessAndRefreshToken = async (userId) => {
     try {
@@ -65,6 +65,21 @@ const registerUser = asyncHandler(async (req, res) => {
         }
 
         // todo: send email verification link
+
+        resend.emails.send({
+            from: 'shortener@updates.openurl.me',
+            to: 'aditya32ft@gmail.com',
+            subject: 'Email verification',
+            html: `<h1>Hey ${createdUser.name}</h1>
+            <p>Thank you for joining OpenUrl! To activate your account and start exploring, please click the verification link below:</p>
+            <a href="${req.protocol}://localhost:5173/user/auth/verify-email?id=${unHashToken}&email=${email}">Verify My Account</a>
+
+
+            <p>Best Regards,</p>
+            <p>OpenUrl</p>
+            `,
+        });
+
         return res
             .status(201)
             .json(
