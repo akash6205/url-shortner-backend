@@ -1,8 +1,11 @@
-import express from 'express';
 import User from '../models/user.model.js';
 import { apiError } from '../utils/apiError.js';
 import { apiResponce } from '../utils/apiResponce.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
+// import { Resend } from 'resend';
+// import crypto from 'crypto';
+
+// const resend = new Resend(`re_KunYK235_5iJp73yDLFAn87712C8fZiRG`);
 
 const generateAccessAndRefreshToken = async (userId) => {
     try {
@@ -23,7 +26,7 @@ const registerUser = asyncHandler(async (req, res) => {
         return res
             .status(400)
             .json(
-                new apiResponce(
+                new apiError(
                     400,
                     'email, password and name are required',
                     null,
@@ -36,17 +39,42 @@ const registerUser = asyncHandler(async (req, res) => {
         if (userExist) {
             return res
                 .status(400)
-                .json(new apiResponce(400, 'User already exist', null, false));
+                .json(new apiError(400, 'User already exist', null, false));
         }
-        const creatUser = await User.create({
+        const user = await User.create({
             email,
             password,
             name,
         });
-        creatUser.password = undefined;
+        const { unHashToken, hashToken } = await user.generateTemporaryToken();
+        user.emailVerificationToken = hashToken;
+        await user.save({ validateBeforeSave: false });
+
+        const createdUser = await User.findById(user._id).select(
+            '-password -refreshToken -emailVerificationToken'
+        );
+        if (!createdUser) {
+            return res
+                .status(500)
+                .json(
+                    new apiError(
+                        500,
+                        'something went wrong while creating user'
+                    )
+                );
+        }
+
+        // todo: send email verification link
         return res
             .status(201)
-            .json(new apiResponce(201, 'User created', creatUser, true));
+            .json(
+                new apiResponce(
+                    201,
+                    'User created',
+                    { user: createdUser },
+                    true
+                )
+            );
     } catch (error) {
         console.log(error);
         throw new apiError(
@@ -148,4 +176,45 @@ const logoutUser = asyncHandler(async (req, res) => {
     }
 });
 
-export { registerUser, loginUser, logoutUser };
+// const verifyEmail = asyncHandler(async (req, res) => {
+//     const { token } = req.params;
+//     if (!token) {
+//         return res.status(400).json(new apiError(400, 'Invalid token'));
+//     }
+
+//     try {
+//         const hashToken = crypto
+//             .createHash('sha256')
+//             .update(token)
+//             .digest('hex');
+
+//         const verifiedUser = await User.findOneAndUpdate(
+//             { emailVerificationToken: hashToken },
+//             {
+//                 $set: {
+//                     emailVerificationToken: '',
+//                     isEmailVerified: true,
+//                 },
+//             },
+//             {
+//                 new: true,
+//             }
+//         );
+//         if (!verifiedUser) {
+//             return res.status(400).json(new apiError(400, 'Invalid token'));
+//         }
+
+//         return res
+//             .status(200)
+//             .json(new apiResponce(200, 'Email verified', undefined, true));
+//     } catch (error) {
+//         console.log(error);
+//         throw new apiError(
+//             500,
+//             'something went wrong while verifying email',
+//             error
+//         );
+//     }
+// });
+
+export { registerUser, loginUser, logoutUser, verifyEmail };
