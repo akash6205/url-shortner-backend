@@ -4,6 +4,7 @@ import { apiResponce } from '../utils/apiResponce.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import crypto from 'crypto';
 import { resend } from '../utils/resend.js';
+import jwt from 'jsonwebtoken';
 
 const generateAccessAndRefreshToken = async (userId) => {
     try {
@@ -226,6 +227,57 @@ const verifyEmail = asyncHandler(async (req, res) => {
             500,
             'something went wrong while verifying email',
             error
+        );
+    }
+});
+
+const refreshAccessToken = asyncHandler(async (req, res) => {
+    try {
+        const { token } = req.cookies;
+        if (!token) {
+            throw new apiError(401, 'token not found');
+        }
+        const vaildateUser = jwt.verify(
+            token,
+            process.env.REFRESH_TOKEN_SECRET
+        );
+        if (!vaildateUser) {
+            throw new apiError(401, 'token not valid');
+        }
+        const user = await User.findById(vaildateUser._id);
+        if (!user) {
+            throw new apiError(401, 'user not found');
+        }
+        if (token !== user.refreshToken) {
+            throw new apiError(401, 'token not valid');
+        }
+        const { accessToken, refreshToken } =
+            await generateAccessAndRefreshToken(user._id);
+        const updatedUser = await User.findByIdAndUpdate(
+            user._id,
+            {
+                $set: {
+                    refreshToken: refreshToken,
+                },
+            },
+            {
+                new: true,
+            }
+        );
+        return res
+            .status(200)
+            .json(
+                new apiResponce(
+                    200,
+                    'Access token refreshed',
+                    { updatedUser, accessToken },
+                    true
+                )
+            );
+    } catch (error) {
+        throw new apiError(
+            500,
+            'something went wrong while refreshing access token'
         );
     }
 });
