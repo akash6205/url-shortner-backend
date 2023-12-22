@@ -104,29 +104,18 @@ const loginUser = asyncHandler(async (req, res) => {
     if (!(email && password)) {
         return res
             .status(400)
-            .json(
-                new apiResponce(
-                    400,
-                    'email and password are required',
-                    null,
-                    false
-                )
-            );
+            .json(new apiError(400, 'email and password are required'));
     }
 
     try {
         const user = await User.findOne({ email });
         if (!user) {
-            return res
-                .status(400)
-                .json(new apiResponce(400, 'User not found', null, false));
+            return res.status(400).json(new apiError(400, 'User not found'));
         }
 
         const checkPassword = await user.isCorrectPassword(password);
         if (!checkPassword) {
-            return res
-                .status(400)
-                .json(new apiResponce(400, 'Invalid password', null, false));
+            return res.status(400).json(new apiError(400, 'Invalid password'));
         }
 
         const { accessToken, refreshToken } =
