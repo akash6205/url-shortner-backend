@@ -10,7 +10,7 @@ export const verifyToken = asyncHandler(async (req, res, next) => {
         if (!token) {
             return res.status(401).json(new apiError(401, 'token not found'));
         }
-        const decodedToken = jwt.verify(token, ACCESS_TOKEN_SECRET);
+        const decodedToken = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
 
         if (!decodedToken) {
             return res.status(401).json(new apiError(402, 'Unauthorized user'));
