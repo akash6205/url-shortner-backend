@@ -4,6 +4,7 @@ import { apiError } from '../utils/apiError.js';
 import crypto from 'crypto';
 import { getmetaData } from '../utils/getMetaData.js';
 import User from '../models/user.model.js';
+import { asyncHandler } from '../utils/asyncHandler.js';
 
 const redirect = async (req, res) => {
     try {
@@ -30,7 +31,7 @@ const shortLink = async (req, res) => {
         return res.status(400).json(new apiError(400, 'url is required'));
     }
     try {
-        const user = User.findById(_id);
+        const user = await User.findById(_id);
         const metaData = await getmetaData(link);
         const key = crypto.randomBytes(4).toString('hex');
         const shortenLink = await Link.create({
@@ -54,4 +55,19 @@ const shortLink = async (req, res) => {
     }
 };
 
-export { shortLink, redirect };
+const getAllLinks = asyncHandler(async (req, res) => {
+    try {
+        const { _id } = req.user;
+        if (!_id) {
+            throw new apiError(401, 'unauthorized', null, false);
+        }
+        const links = await Link.find({ user: _id });
+        res.status(200).json(
+            new apiResponce(200, 'links', { links: links }, true)
+        );
+    } catch (error) {
+        throw new apiError(500, 'error while getting links', error);
+    }
+});
+
+export { shortLink, redirect, getAllLinks };
