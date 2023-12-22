@@ -27,9 +27,7 @@ const shortLink = async (req, res) => {
     const { link } = req.body;
 
     if (!link) {
-        return res
-            .status(400)
-            .json(new apiResponce(400, 'url is required', null, false));
+        return res.status(400).json(new apiError(400, 'url is required'));
     }
     try {
         const user = User.findById(_id);
@@ -47,10 +45,9 @@ const shortLink = async (req, res) => {
         const data = await Link.findById(shortenLink._id);
 
         res.status(200).json(
-            new apiResponce(200, 'link created', { res: data }, true)
+            new apiResponce(200, 'link created', { link: data }, true)
         );
     } catch (error) {
-        console.log(error);
         return res
             .status(500)
             .json(new apiError(500, 'error while shorting link', error));
