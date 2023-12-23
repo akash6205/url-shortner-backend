@@ -18,7 +18,8 @@
         "jsonwebtoken": "^9.0.2",
         "metadata-scraper": "^0.2.61",
         "mongoose": "^8.0.2",
-        "resend": "^2.0.0"
+        "resend": "^2.0.0",
+        "ua-parser-js": "^1.0.37"
     },
     "devDependencies": {
         "nodemon": "^3.0.1"
