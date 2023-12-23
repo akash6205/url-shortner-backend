@@ -14,8 +14,10 @@ app.use(cookieParser());
 
 import linkRouter from './routes/link.route.js';
 import userRouter from './routes/user.route.js';
+import { redirect } from './controllers/link.controller.js';
 
 app.use('/api/v1/link', linkRouter);
 app.use('/api/v1/user', userRouter);
+app.get('/:key', redirect);
 app.get('/test', (req, res) => res.send('hello world'));
 export default app;
