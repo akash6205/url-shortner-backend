@@ -224,7 +224,7 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
     try {
         const { token } = req.cookies;
         if (!token) {
-            throw new apiError(401, 'token not found');
+            res.status(401).json(new apiError(401, 'token not found'));
         }
         const vaildateUser = jwt.verify(
             token,
@@ -255,11 +255,17 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
         );
         return res
             .status(200)
+            .cookie('token', refreshToken, {
+                httpOnly: true,
+                secure: true,
+                sameSite: 'none',
+                expires: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7),
+            })
             .json(
                 new apiResponce(
                     200,
                     'Access token refreshed',
-                    { updatedUser, accessToken },
+                    { user: updatedUser, accessToken },
                     true
                 )
             );
