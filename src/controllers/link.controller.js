@@ -103,14 +103,41 @@ const getStats = asyncHandler(async (req, res) => {
             throw new apiError(400, 'key is required');
         }
 
-        const link = await Link.findOne({
-            key,
-            user: _id,
-        });
-        if (!link) {
-            throw new apiError(404, 'link not found');
-        }
-        const stats = await Stats.findOne({ linkId: link._id });
+        const stats = await Link.aggregate([
+            {
+                $match: {
+                    key: key,
+                    user: _id,
+                },
+            },
+            {
+                $lookup: {
+                    from: 'stats',
+                    localField: '_id',
+                    foreignField: 'linkId',
+                    as: 'stats',
+                },
+            },
+            {
+                $addFields: {
+                    stats: {
+                        $arrayElemAt: ['$stats', 0],
+                    },
+                },
+            },
+            {
+                $project: {
+                    key: 1,
+                    originUrl: 1,
+                    title: 1,
+                    description: 1,
+                    image: 1,
+                    icon: 1,
+                    clicks: 1,
+                    stats: 1,
+                },
+            },
+        ]);
         if (!stats) {
             throw new apiError(404, 'stats not found');
         }
