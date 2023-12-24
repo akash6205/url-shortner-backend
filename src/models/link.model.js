@@ -39,11 +39,6 @@ const LinkSchema = new Schema(
             type: String,
             default: '',
         },
-        expireAt: {
-            type: Date,
-            default: Date.now,
-            index: { expires: '120m' },
-        },
     },
     { timestamps: true }
 );
