@@ -147,4 +147,26 @@ const getStats = asyncHandler(async (req, res) => {
     }
 });
 
-export { shortLink, redirect, getAllLinks, getStats };
+const deleteLink = asyncHandler(async (req, res) => {
+    const user = req;
+    if (!user) {
+        throw new apiError(401, 'unauthorized', null, false);
+    }
+    const { _id } = req.params;
+    if (!_id) {
+        throw new apiError(400, 'id is required');
+    }
+
+    try {
+        const link = await Link.findByIdAndDelete(_id);
+        if (!link) {
+            throw new apiError(404, 'link not found');
+        }
+        await Stats.findOneAndDelete({ linkId: link._id });
+        return res.status(200).json(new apiResponce(200, 'link deleted'));
+    } catch (error) {
+        throw new apiError(500, 'error while deleting link', error);
+    }
+});
+
+export { shortLink, redirect, getAllLinks, getStats, deleteLink };
