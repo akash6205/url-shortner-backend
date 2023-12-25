@@ -20,25 +20,13 @@ const generateAccessAndRefreshToken = async (userId) => {
 
 const registerUser = asyncHandler(async (req, res) => {
     const { email, password, name } = req.body;
-    console.log(email, password, name);
     if (!(email && password && name)) {
-        return res
-            .status(400)
-            .json(
-                new apiError(
-                    400,
-                    'email, password and name are required',
-                    null,
-                    false
-                )
-            );
+        throw new apiError(400, 'email, password and name are required');
     }
     try {
         const userExist = await User.findOne({ email });
         if (userExist) {
-            return res
-                .status(400)
-                .json(new apiError(400, 'User already exist', null, false));
+            throw new apiError(400, 'User already exist');
         }
         const user = await User.create({
             email,
@@ -47,20 +35,13 @@ const registerUser = asyncHandler(async (req, res) => {
         });
         const { unHashToken, hashToken } = await user.generateTemporaryToken();
         user.emailVerificationToken = hashToken;
-        await user.save({ validateBeforeSave: false });
+        await user.save();
 
         const createdUser = await User.findById(user._id).select(
             '-password -refreshToken -emailVerificationToken'
         );
         if (!createdUser) {
-            return res
-                .status(500)
-                .json(
-                    new apiError(
-                        500,
-                        'something went wrong while creating user'
-                    )
-                );
+            throw new apiError(500, 'something went wrong while creating user');
         }
 
         // todo: send email verification link
@@ -71,7 +52,7 @@ const registerUser = asyncHandler(async (req, res) => {
             subject: 'Email verification',
             html: `<h1>Hey ${createdUser.name}</h1>
             <p>Thank you for joining OpenUrl! To activate your account and start exploring, please click the verification link below:</p>
-            <a href="${req.protocol}://localhost:5173/user/auth/verify-email?id=${unHashToken}&email=${email}">Verify My Account</a>
+            <a href="${req.protocol}://127.0.0.1:5173/user/auth/verify-email?id=${unHashToken}&email=${email}">Verify My Account</a>
 
 
             <p>Best Regards,</p>
@@ -102,11 +83,8 @@ const registerUser = asyncHandler(async (req, res) => {
 const loginUser = asyncHandler(async (req, res) => {
     const { email, password } = req.body;
     if (!(email && password)) {
-        return res
-            .status(400)
-            .json(new apiError(400, 'email and password are required'));
+        throw new apiError(400, 'email and password are required');
     }
-
     try {
         const user = await User.findOne({ email });
         if (!user) {
@@ -147,7 +125,6 @@ const loginUser = asyncHandler(async (req, res) => {
                 )
             );
     } catch (error) {
-        console.log(error);
         throw new apiError(500, 'something went wrong while login', error);
     }
 });
@@ -182,7 +159,7 @@ const logoutUser = asyncHandler(async (req, res) => {
 const verifyEmail = asyncHandler(async (req, res) => {
     const { token } = req.params;
     if (!token) {
-        return res.status(400).json(new apiError(400, 'Invalid token'));
+        throw new apiError(400, 'verification token not found');
     }
 
     try {
@@ -204,14 +181,13 @@ const verifyEmail = asyncHandler(async (req, res) => {
             }
         );
         if (!verifiedUser) {
-            return res.status(400).json(new apiError(400, 'Invalid token'));
+            throw new apiError(400, 'Invalid token');
         }
 
         return res
             .status(200)
             .json(new apiResponce(200, 'Email verified', undefined, true));
     } catch (error) {
-        console.log(error);
         throw new apiError(
             500,
             'something went wrong while verifying email',
@@ -224,7 +200,7 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
     try {
         const { token } = req.cookies;
         if (!token) {
-            res.status(401).json(new apiError(401, 'token not found'));
+            throw new apiError(401, 'token not found');
         }
         const vaildateUser = jwt.verify(
             token,
@@ -254,13 +230,13 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
             }
         );
         return res
-            .status(200)
             .cookie('token', refreshToken, {
                 httpOnly: true,
                 secure: true,
                 sameSite: 'none',
                 expires: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7),
             })
+            .status(200)
             .json(
                 new apiResponce(
                     200,
