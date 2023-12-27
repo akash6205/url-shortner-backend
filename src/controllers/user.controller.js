@@ -1,6 +1,6 @@
 import User from '../models/user.model.js';
-import { apiError } from '../utils/apiError.js';
-import { apiResponce } from '../utils/apiResponce.js';
+import { ApiError } from '../utils/ApiError.js';
+import { ApiResponce } from '../utils/ApiResponce.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import crypto from 'crypto';
 import { resend } from '../utils/resend.js';
@@ -21,12 +21,12 @@ const generateAccessAndRefreshToken = async (userId) => {
 const registerUser = asyncHandler(async (req, res) => {
     const { email, password, name } = req.body;
     if (!(email && password && name)) {
-        throw new apiError(400, 'email, password and name are required');
+        throw new ApiError(400, 'email, password and name are required');
     }
     try {
         const userExist = await User.findOne({ email });
         if (userExist) {
-            throw new apiError(400, 'User already exist');
+            throw new ApiError(400, 'User already exist');
         }
         const user = await User.create({
             email,
@@ -41,7 +41,7 @@ const registerUser = asyncHandler(async (req, res) => {
             '-password -refreshToken -emailVerificationToken'
         );
         if (!createdUser) {
-            throw new apiError(500, 'something went wrong while creating user');
+            throw new ApiError(500, 'something went wrong while creating user');
         }
 
         // todo: send email verification link
@@ -63,7 +63,7 @@ const registerUser = asyncHandler(async (req, res) => {
         return res
             .status(201)
             .json(
-                new apiResponce(
+                new ApiResponce(
                     201,
                     'User created',
                     { user: createdUser },
@@ -72,7 +72,7 @@ const registerUser = asyncHandler(async (req, res) => {
             );
     } catch (error) {
         console.log(error);
-        throw new apiError(
+        throw new ApiError(
             500,
             'something went wrong while creating user',
             error
@@ -83,17 +83,19 @@ const registerUser = asyncHandler(async (req, res) => {
 const loginUser = asyncHandler(async (req, res) => {
     const { email, password } = req.body;
     if (!(email && password)) {
-        throw new apiError(400, 'email and password are required');
+        return res
+            .status(400)
+            .json(new ApiError(400, 'all fields are required'));
     }
     try {
         const user = await User.findOne({ email });
         if (!user) {
-            return res.status(400).json(new apiError(400, 'User not found'));
+            return res.status(400).json(new ApiError(400, 'User not found'));
         }
 
         const checkPassword = await user.isCorrectPassword(password);
         if (!checkPassword) {
-            return res.status(400).json(new apiError(400, 'Invalid password'));
+            return res.status(400).json(new ApiError(400, 'Invalid password'));
         }
 
         const { accessToken, refreshToken } =
@@ -114,7 +116,7 @@ const loginUser = asyncHandler(async (req, res) => {
             })
             .status(200)
             .json(
-                new apiResponce(
+                new ApiResponce(
                     200,
                     'Login success',
                     {
@@ -125,7 +127,7 @@ const loginUser = asyncHandler(async (req, res) => {
                 )
             );
     } catch (error) {
-        throw new apiError(500, 'something went wrong while login', error);
+        throw new ApiError(500, 'something went wrong while login', error);
     }
 });
 
@@ -150,16 +152,16 @@ const logoutUser = asyncHandler(async (req, res) => {
                 sameSite: 'none',
             })
             .status(200)
-            .json(new apiResponce(200, 'Logout success', null, true));
+            .json(new ApiResponce(200, 'Logout success', null, true));
     } catch (error) {
-        return res.status(500).json(new apiError(500, error.message));
+        return res.status(500).json(new ApiError(500, error.message));
     }
 });
 
 const verifyEmail = asyncHandler(async (req, res) => {
     const { token } = req.params;
     if (!token) {
-        throw new apiError(400, 'verification token not found');
+        throw new ApiError(400, 'verification token not found');
     }
 
     try {
@@ -181,14 +183,14 @@ const verifyEmail = asyncHandler(async (req, res) => {
             }
         );
         if (!verifiedUser) {
-            throw new apiError(400, 'Invalid token');
+            throw new ApiError(400, 'Invalid token');
         }
 
         return res
             .status(200)
-            .json(new apiResponce(200, 'Email verified', undefined, true));
+            .json(new ApiResponce(200, 'Email verified', undefined, true));
     } catch (error) {
-        throw new apiError(
+        throw new ApiError(
             500,
             'something went wrong while verifying email',
             error
@@ -200,21 +202,21 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
     try {
         const { token } = req.cookies;
         if (!token) {
-            throw new apiError(401, 'token not found');
+            throw new ApiError(401, 'token not found');
         }
         const vaildateUser = jwt.verify(
             token,
             process.env.REFRESH_TOKEN_SECRET
         );
         if (!vaildateUser) {
-            throw new apiError(401, 'token not valid');
+            throw new ApiError(401, 'token not valid');
         }
         const user = await User.findById(vaildateUser._id);
         if (!user) {
-            throw new apiError(401, 'user not found');
+            throw new ApiError(401, 'user not found');
         }
         if (token !== user.refreshToken) {
-            throw new apiError(401, 'token not valid');
+            throw new ApiError(401, 'token not valid');
         }
         const { accessToken, refreshToken } =
             await generateAccessAndRefreshToken(user._id);
@@ -238,7 +240,7 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
             })
             .status(200)
             .json(
-                new apiResponce(
+                new ApiResponce(
                     200,
                     'Access token refreshed',
                     { user: updatedUser, accessToken },
@@ -246,7 +248,7 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
                 )
             );
     } catch (error) {
-        throw new apiError(
+        throw new ApiError(
             500,
             'something went wrong while refreshing access token'
         );
