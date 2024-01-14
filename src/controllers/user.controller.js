@@ -3,7 +3,7 @@ import { ApiError } from '../utils/ApiError.js';
 import { ApiResponce } from '../utils/ApiResponce.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import crypto from 'crypto';
-import { resend } from '../utils/resend.js';
+// import { resend } from '../utils/resend.js';
 import jwt from 'jsonwebtoken';
 
 const generateAccessAndRefreshToken = async (userId) => {
@@ -101,11 +101,17 @@ const loginUser = asyncHandler(async (req, res) => {
         const { accessToken, refreshToken } =
             await generateAccessAndRefreshToken(user._id);
 
-        user.refreshToken = refreshToken;
-        const userData = await user.save();
-
-        userData.password = undefined;
-        userData.refreshToken = undefined;
+        const logedInUser = await User.findByIdAndUpdate(
+            user._id,
+            {
+                $set: {
+                    refreshToken: refreshToken,
+                },
+            },
+            {
+                new: true,
+            }
+        ).select('-password -refreshToken -emailVerificationToken');
 
         return res
             .cookie('token', refreshToken, {
@@ -120,7 +126,7 @@ const loginUser = asyncHandler(async (req, res) => {
                     200,
                     'Login success',
                     {
-                        user: userData,
+                        user: logedInUser,
                         accessToken,
                     },
                     true
@@ -230,7 +236,7 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
             {
                 new: true,
             }
-        );
+        ).select('-password -refreshToken -emailVerificationToken');
         return res
             .cookie('token', refreshToken, {
                 httpOnly: true,
