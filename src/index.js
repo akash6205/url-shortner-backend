@@ -1,9 +1,6 @@
 import dotenv from 'dotenv';
 import connectDb from './db/index.js';
 import app from './app.js';
-
-import { Resend } from 'resend';
-
 dotenv.config({
     path: './.env',
 });
@@ -22,7 +19,3 @@ connectDb()
     .catch((error) => {
         console.log('⚠️ Fail to start the surver', error);
     });
-
-const resend = new Resend(process.env.RESEND_API_KEY);
-
-export default resend;

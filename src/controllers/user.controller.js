@@ -4,7 +4,8 @@ import { ApiResponce } from '../utils/ApiResponce.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
-import resend from '../index.js';
+import { Resend } from 'resend';
+const resend = new Resend('re_KunYK235_5iJp73yDLFAn87712C8fZiRG');
 
 const generateAccessAndRefreshToken = async (userId) => {
     try {
