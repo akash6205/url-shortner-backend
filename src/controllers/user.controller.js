@@ -3,8 +3,8 @@ import { ApiError } from '../utils/ApiError.js';
 import { ApiResponce } from '../utils/ApiResponce.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import crypto from 'crypto';
-import { resend } from '../utils/resend.js';
 import jwt from 'jsonwebtoken';
+import resend from '../index.js';
 
 const generateAccessAndRefreshToken = async (userId) => {
     try {
